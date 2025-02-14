@@ -23,10 +23,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text("Dot Chat"),
-      ),
       body: _showChat ? _buildChatUI() : _buildIntroUI(), // Show either the intro screen or chat
     );
   }
@@ -97,18 +93,12 @@ class _HomePageState extends State<HomePage> {
       responseStream.listen((event) {
         if (messages.first.user.id == dot.id) {
           setState(() {
-            messages.first.text += event!.content!.parts!.fold(
-              '',
-              (previousValue, element) => previousValue + (element as TextPart).text,
-            );
+             messages.first.text += event!.content!.parts!.map((part) => (part as TextPart).text).join(" "); 
           });
         } else {
           setState(() {
             messages.insert(0, ChatMessage(
-              text: event!.content!.parts!.fold(
-                '',
-                (previousValue, element) => previousValue + (element as TextPart).text,
-              ),
+              text: event!.content!.parts!.map((part) => (part as TextPart).text).join(" "),
               user: dot,
               createdAt: DateTime.now(),
             ));
