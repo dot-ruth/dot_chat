@@ -37,6 +37,7 @@ dependencies:
   flutter_gemini: ^3.0.0
   dash_chat_2: ^0.0.21
   flutter_dotenv: ^5.2.1
+  flutter_markdown: ^0.7.6+2
 
 dev_dependencies:
   flutter_test:

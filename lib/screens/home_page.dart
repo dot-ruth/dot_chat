@@ -1,6 +1,7 @@
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,9 +32,28 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildUI(){
-    return DashChat(currentUser: currentUser, onSend: _sendMessage, messages: messages);
-  }
+ Widget _buildUI() {
+  return DashChat(
+    currentUser: currentUser,
+    onSend: _sendMessage,
+    messages: messages,
+    messageOptions: MessageOptions(
+      messageTextBuilder: (ChatMessage message, ChatMessage? previousMessage, ChatMessage? nextMessage) {
+        return MarkdownBody(
+          data: message.text,
+          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+            p: TextStyle(
+              color: message.user.id == currentUser.id ? Colors.white : Colors.black,
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+
+
 
   void _sendMessage(ChatMessage chatMessage) {
   setState(() {
@@ -50,7 +70,7 @@ class _HomePageState extends State<HomePage> {
           messages.first.text += event!.content!.parts!.fold(
             '',
             (previousValue, element) => previousValue + (element as TextPart).text,
-          );
+          ); 
         });
       } else {
         setState(() {
