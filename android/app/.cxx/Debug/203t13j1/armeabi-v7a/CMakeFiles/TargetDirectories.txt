@@ -1,0 +1,2 @@
+C:/Users/Abel/source/repos/Ruth's Projects/dot_chat/android/app/.cxx/Debug/203t13j1/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/Abel/source/repos/Ruth's Projects/dot_chat/android/app/.cxx/Debug/203t13j1/armeabi-v7a/CMakeFiles/rebuild_cache.dir
