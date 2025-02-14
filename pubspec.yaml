@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_gemini: ^3.0.0
   dash_chat_2: ^0.0.21
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
