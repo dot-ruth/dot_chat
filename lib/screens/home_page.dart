@@ -24,6 +24,9 @@ class _HomePageState extends State<HomePage> {
   final List<String> samplePrompts = [
     "How are you?",
     "Tell me a joke",
+    "What's the weather?",
+    "What's the time?",
+    "Can you help me?",
   ];
 
   @override
@@ -31,6 +34,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
+        scrolledUnderElevation: 0.0,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children:  [
@@ -77,55 +81,55 @@ class _HomePageState extends State<HomePage> {
         children: [
           if (messages.isEmpty)
             Expanded(
+              flex: 3,
               child: Center(
-                child: Column(
-                  children: [
-                    Image.asset('assets/dot.png', width: 100, height: 100),
-                    const SizedBox(height: 5),
-                    const Text(
-                      "Welcome to Dot Chat!",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      "Chat with Dot, your AI assistant.",
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 5),
-                    Column(
-                children: samplePrompts.map((prompt) {
-                  return GestureDetector(
-                    onTap: () {
-                      _textController.text = prompt;
-                      _textController.selection = TextSelection.fromPosition(
-                        TextPosition(offset: _textController.text.length),
+                child: SingleChildScrollView(
+                  child:  Column(
+                      children: [
+                        Image.asset('assets/dot.png', width: 30),
+                        const Text(
+                          "Welcome to Dot Chat!",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text(
+                          "Chat with Dot, your AI assistant.",
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 20),
+                        Column(
+                    children: samplePrompts.map((prompt) {
+                      return GestureDetector(
+                        onTap: () {
+                          ChatMessage chatMessage = ChatMessage(text: prompt, user: currentUser, createdAt: DateTime.now());
+                          _sendMessage(chatMessage);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                          margin: EdgeInsets.only(bottom: 5),
+                          width: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Text(
+                            prompt,
+                            style: const TextStyle(fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       );
-                      setState(() {});
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-                      margin: EdgeInsets.only(bottom: 5),
-                      width: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.0),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Text(
-                        prompt,
-                        style: const TextStyle(fontSize: 14),
-                        textAlign: TextAlign.center,
-                      ),
+                    }).toList(),
+                                  ),
+                      ],
                     ),
-                  );
-                }).toList(),
-              ),
-                  ],
                 ), 
               ),
             ),
           Expanded(
+            flex: 1,
             child: DashChat(
               currentUser: currentUser,
               onSend: _sendMessage,
@@ -138,6 +142,8 @@ class _HomePageState extends State<HomePage> {
                 inputDecoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  fillColor: Colors.grey.shade50,
+                  filled: true,
                   hintText: "Type a message...",
                 ),
               ),
