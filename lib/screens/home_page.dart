@@ -1,8 +1,11 @@
 import 'package:dash_chat_2/dash_chat_2.dart';
+import 'package:dot_chat/models/chat_session_model.dart';
+import 'package:dot_chat/widgets/chat_history_drawer.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:dot_chat/services/chat_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,12 +15,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   ChatUser currentUser = ChatUser(id: "0", firstName: "You");
   ChatUser dot = ChatUser(
     id: "1",
     firstName: "Dot",
   );
   List<ChatMessage> messages = [];
+  late ChatSessionModel session;
+
+  void _loadChat(List<ChatMessage> selectedMessages,ChatSessionModel selectedSession) {
+    setState(() {
+    messages = selectedMessages; 
+    session = selectedSession;
+  });
+  }
+
   final Gemini gemini = Gemini.instance;
   bool isBotTyping = false;
   final TextEditingController _textController = TextEditingController();
@@ -32,9 +45,11 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key:_scaffoldKey,
       appBar: AppBar(
         backgroundColor: Colors.white,
         scrolledUnderElevation: 0.0,
+        automaticallyImplyLeading: false,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children:  [
@@ -42,7 +57,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 IconButton(
                           icon: Icon(CupertinoIcons.line_horizontal_3_decrease),
-                          onPressed: () {},
+                          onPressed: () {_scaffoldKey.currentState?.openDrawer();},
                         ),
                 Text(
                   "DOT",
@@ -54,22 +69,19 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 IconButton(
-                icon: Icon(CupertinoIcons.chat_bubble),
-                onPressed: () {},
-                          ),
-                          IconButton(
                 icon: Icon(CupertinoIcons.delete),
                 onPressed: () {
                   setState(() {
                     messages.clear();
                   });
                 },
-                          ),
+               ),
               ],
             ),
           ],
         ),
       ),
+      drawer: ChatHistoryDrawer(onChatSelected: _loadChat),
       body: _buildChatUI(),
     );
   }
@@ -169,12 +181,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _sendMessage(ChatMessage chatMessage) {
+  void _sendMessage(ChatMessage chatMessage) async {
     if (chatMessage.text.trim().isNotEmpty) {
       setState(() {
         messages.insert(0, chatMessage);
         isBotTyping = true;
       });
+
+      //Hive Implementation
+      ChatService.addMessageToSession(session,chatMessage); 
+
 
       List<Part> parts = [TextPart(chatMessage.text)];
       final responseStream = gemini.promptStream(parts: parts);
@@ -199,6 +215,10 @@ class _HomePageState extends State<HomePage> {
           setState(() {
             isBotTyping = false;
           });
+
+      // Save the message to Hive after stream completion
+      ChatService.addMessageToSession(session, messages.first);
+    
         },
       );
     } else {
