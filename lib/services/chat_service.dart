@@ -7,14 +7,15 @@ class ChatService {
   static final _chatBox = Hive.box<ChatSessionModel>('chatBox');
 
   // Create a new session
-  static Future<void> createSession(ChatMessage firstMessage) async {
+  static Future<ChatSessionModel> createSession() async {
     final newSession = ChatSessionModel(
       id: DateTime.now().toIso8601String(),
-      title: firstMessage.text, // Use first message as session title
-      messages: [ChatMessageModel.fromChatMessage(firstMessage)],
+      title: "New Chat", // Use first message as session title
+      messages: [],
       createdAt: DateTime.now(),
     );
     await _chatBox.add(newSession);
+    return newSession;
   }
 
   // Get all sessions
@@ -23,12 +24,10 @@ class ChatService {
   }
 
   // Add a message to an existing session
-  static Future<void> addMessageToSession(ChatSessionModel session, ChatMessage message) async {
-    if (_chatBox.isNotEmpty) {
+  static Future<void> addMessageToSession(ChatSessionModel? session, ChatMessage message) async {
+    if (_chatBox.isNotEmpty && session != null) {
       session.addMessage(message);
-    } else {
-      await createSession(message);
-    }
+    } 
   }
 
   // Retrieve messages from a session

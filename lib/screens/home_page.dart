@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
     firstName: "Dot",
   );
   List<ChatMessage> messages = [];
-  late ChatSessionModel session;
+  ChatSessionModel? session;
 
   void _loadChat(List<ChatMessage> selectedMessages,ChatSessionModel selectedSession) {
     setState(() {
@@ -113,8 +113,12 @@ class _HomePageState extends State<HomePage> {
                         Column(
                     children: samplePrompts.map((prompt) {
                       return GestureDetector(
-                        onTap: () {
+                        onTap: () async{
                           ChatMessage chatMessage = ChatMessage(text: prompt, user: currentUser, createdAt: DateTime.now());
+                          if (session == null)  { 
+                            session = await ChatService.createSession();
+                            setState(() {});
+                          }
                           _sendMessage(chatMessage);
                         },
                         child: Container(
@@ -189,6 +193,11 @@ class _HomePageState extends State<HomePage> {
       });
 
       //Hive Implementation
+      if (messages.length == 1 && session?.title == "New Chat") {
+       session?.title = chatMessage.text;
+       await session?.save(); 
+       setState(() {}); 
+      }
       ChatService.addMessageToSession(session,chatMessage); 
 
 
