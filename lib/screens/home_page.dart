@@ -70,11 +70,14 @@ class _HomePageState extends State<HomePage> {
               children: [
                 IconButton(
                 icon: Icon(CupertinoIcons.delete),
-                onPressed: () {
-                  setState(() {
-                    messages.clear();
-                  });
-                },
+                onPressed: () async {
+                   if (session != null) {
+                       session!.messages.clear(); // Clear the messages list in the session
+                       await session!.save(); // Save the session changes to Hive
+                    }
+
+                   setState(() {messages.clear(); });
+                 },
                ),
               ],
             ),

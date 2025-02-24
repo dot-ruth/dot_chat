@@ -1,5 +1,4 @@
 import 'package:dash_chat_2/dash_chat_2.dart';
-import 'package:dot_chat/models/chat_message_model.dart';
 import 'package:dot_chat/models/chat_session_model.dart';
 import 'package:hive/hive.dart';
 
