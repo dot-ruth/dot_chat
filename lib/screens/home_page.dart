@@ -23,14 +23,6 @@ class _HomePageState extends State<HomePage> {
   );
   List<ChatMessage> messages = [];
   ChatSessionModel? session;
-
-  void _loadChat(List<ChatMessage> selectedMessages,ChatSessionModel selectedSession) {
-    setState(() {
-    messages = selectedMessages; 
-    session = selectedSession;
-  });
-  }
-
   final Gemini gemini = Gemini.instance;
   bool isBotTyping = false;
   final TextEditingController _textController = TextEditingController();
@@ -41,6 +33,71 @@ class _HomePageState extends State<HomePage> {
     "What's the time?",
     "Can you help me?",
   ];
+
+  void _loadChat(List<ChatMessage> selectedMessages,ChatSessionModel selectedSession) {
+    setState(() {
+    messages = selectedMessages; 
+    session = selectedSession;
+  });
+  }
+
+  void _sendMessage(ChatMessage chatMessage) async {
+    if (chatMessage.text.trim().isNotEmpty) {
+      setState(() {
+        messages.insert(0, chatMessage);
+        isBotTyping = true;
+      });
+
+      //Hive Implementation
+      if (messages.length == 1 && session?.title == "New Chat") {
+       session?.title = chatMessage.text;
+       await session?.save(); 
+       setState(() {}); 
+      }
+      ChatService.addMessageToSession(session,chatMessage); 
+
+
+      List<Part> parts = [TextPart(chatMessage.text)];
+      final responseStream = gemini.promptStream(
+        parts: parts,
+        model: 'gemini-2.0-flash-exp',
+        );
+
+      responseStream.listen(
+        (event) {
+          String generatedText = event!.content!.parts!
+          .map((part) => (part as TextPart).text)
+          .join(' ');
+          if (messages.first.user.id == dot.id) {
+            setState(() {
+              messages.first.text += ' $generatedText ';
+            });
+          } else {
+            setState(() {
+              messages.insert(0, ChatMessage(
+                text: generatedText,
+                user: dot,
+                createdAt: DateTime.now(),
+              ));
+            });
+          }
+        },
+        onDone: () {
+          setState(() {
+            isBotTyping = false;
+          });
+
+      // Save the message to Hive after stream completion
+      ChatService.addMessageToSession(session, messages.first);
+    
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Message cannot be empty')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,57 +243,5 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
-
-  void _sendMessage(ChatMessage chatMessage) async {
-    if (chatMessage.text.trim().isNotEmpty) {
-      setState(() {
-        messages.insert(0, chatMessage);
-        isBotTyping = true;
-      });
-
-      //Hive Implementation
-      if (messages.length == 1 && session?.title == "New Chat") {
-       session?.title = chatMessage.text;
-       await session?.save(); 
-       setState(() {}); 
-      }
-      ChatService.addMessageToSession(session,chatMessage); 
-
-
-      List<Part> parts = [TextPart(chatMessage.text)];
-      final responseStream = gemini.promptStream(parts: parts);
-
-      responseStream.listen(
-        (event) {
-          if (messages.first.user.id == dot.id) {
-            setState(() {
-              messages.first.text += event!.content!.parts!.map((part) => (part as TextPart).text).join(' ');
-            });
-          } else {
-            setState(() {
-              messages.insert(0, ChatMessage(
-                text: event!.content!.parts!.map((part) => (part as TextPart).text).join(' '),
-                user: dot,
-                createdAt: DateTime.now(),
-              ));
-            });
-          }
-        },
-        onDone: () {
-          setState(() {
-            isBotTyping = false;
-          });
-
-      // Save the message to Hive after stream completion
-      ChatService.addMessageToSession(session, messages.first);
-    
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Message cannot be empty')),
-      );
-    }
   }
 }
