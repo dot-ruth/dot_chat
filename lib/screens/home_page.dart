@@ -2,8 +2,10 @@ import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:dot_chat/components/chat_ui.dart';
 import 'package:dot_chat/models/chat_session_model.dart';
 import 'package:dot_chat/components/chat_history_drawer.dart';
+import 'package:dot_chat/providers/theme_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,10 +28,11 @@ class _HomePageState extends State<HomePage> {
   
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       key:_scaffoldKey,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: themeProvider.themeMode == ThemeMode.dark ? Colors.black : Colors.white,
         scrolledUnderElevation: 0.0,
         automaticallyImplyLeading: false,
         title: Row(
@@ -50,6 +53,10 @@ class _HomePageState extends State<HomePage> {
 
             Row(
               children: [
+                IconButton(
+                  onPressed: () { themeProvider.toggleTheme();},
+                  icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.sunny : Icons.dark_mode_outlined),
+        ),
                 IconButton(
                 icon: Icon(CupertinoIcons.delete),
                 onPressed: () async {

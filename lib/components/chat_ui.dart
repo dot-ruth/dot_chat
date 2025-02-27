@@ -1,10 +1,12 @@
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:dot_chat/models/chat_session_model.dart';
+import 'package:dot_chat/providers/theme_provider.dart';
 import 'package:dot_chat/services/chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart' as flutter_gemini;
 import 'package:gpt_markdown/custom_widgets/selectable_adapter.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
+import 'package:provider/provider.dart';
 
 class ChatUi extends StatefulWidget {
   final List<ChatMessage> messages;
@@ -83,9 +85,8 @@ class _ChatUiState extends State<ChatUi> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Column(
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    return  Column(
         children: [
           if (widget.messages.isEmpty)
             Expanded(
@@ -122,9 +123,9 @@ class _ChatUiState extends State<ChatUi> {
                           margin: EdgeInsets.only(bottom: 5),
                           width: 200,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: themeProvider.themeMode == ThemeMode.dark ? Colors.black : Colors.white,
                             borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Colors.black),
                           ),
                           child: Text(
                             prompt,
@@ -153,7 +154,7 @@ class _ChatUiState extends State<ChatUi> {
                 inputDecoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  fillColor: Colors.grey.shade50,
+                  fillColor: Colors.white,
                   filled: true,
                   hintText: "Type a message...",
                 ),
@@ -176,7 +177,6 @@ class _ChatUiState extends State<ChatUi> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }
