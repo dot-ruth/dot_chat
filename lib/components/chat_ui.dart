@@ -3,7 +3,8 @@ import 'package:dot_chat/models/chat_session_model.dart';
 import 'package:dot_chat/services/chat_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gemini/flutter_gemini.dart' as flutter_gemini;
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:gpt_markdown/custom_widgets/selectable_adapter.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 
 class ChatUi extends StatefulWidget {
   final List<ChatMessage> messages;
@@ -161,13 +162,13 @@ class _ChatUiState extends State<ChatUi> {
                 showOtherUsersAvatar: false,
                 messagePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 messageTextBuilder: (ChatMessage message, ChatMessage? previousMessage, ChatMessage? nextMessage) {
-                  return MarkdownBody(
-                    data: message.text,
-                    selectable: true,
-                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                      p: TextStyle(
-                        color: message.user.id == currentUser.id ? Colors.white : Colors.black,
-                      ),
+                  return SelectableAdapter(
+                    selectedText: message.text,
+                    child: GptMarkdown(
+                      message.text,
+                      style: TextStyle(
+                          color: message.user.id == currentUser.id ? Colors.white : Colors.black,
+                        ),
                     ),
                   );
                 },
