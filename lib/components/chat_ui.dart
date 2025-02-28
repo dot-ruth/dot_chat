@@ -3,24 +3,31 @@ import 'package:dot_chat/models/chat_session_model.dart';
 import 'package:dot_chat/providers/theme_provider.dart';
 import 'package:dot_chat/services/chat_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gemini/flutter_gemini.dart' as flutter_gemini;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:gpt_markdown/custom_widgets/selectable_adapter.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:provider/provider.dart';
 
 class ChatUi extends StatefulWidget {
   final List<ChatMessage> messages;
-  const ChatUi({super.key, required this.messages});
+  final ChatSessionModel? session;
+  const  ChatUi({super.key, required this.messages, this.session});
 
   @override
   State<ChatUi> createState() => _ChatUiState();
 }
 
 class _ChatUiState extends State<ChatUi> {
-
   ChatSessionModel? session;
+   @override
+  void initState() {
+    super.initState();
+    session = widget.session; 
+  }
+
   bool isBotTyping = false;
-  final flutter_gemini.Gemini gemini = flutter_gemini.Gemini.instance;
+  final model = GenerativeModel(model: 'gemini-2.0-flash',apiKey: dotenv.env['GEMINI_API_KEY'] ?? '');
   ChatUser currentUser = ChatUser(id: "0", firstName: "You");
   ChatUser dot = ChatUser(id: "1", firstName: "Dot");
   final List<String> samplePrompts = [
@@ -31,57 +38,71 @@ class _ChatUiState extends State<ChatUi> {
     "Can you help me?",
   ];
 
-  void _sendMessage(ChatMessage chatMessage) async {
-    if (chatMessage.text.trim().isNotEmpty) {
-      setState(() {
-        widget.messages.insert(0, chatMessage);
-        isBotTyping = true;
-      });
-
-      if (widget.messages.length == 1 && session?.title == "New Chat") {
-       session?.title = chatMessage.text;
-       await session?.save(); 
-       setState(() {}); 
-      }
-      ChatService.addMessageToSession(session,chatMessage); 
-
-      List<flutter_gemini.Part> parts = [flutter_gemini.TextPart(chatMessage.text)];
-      final responseStream = gemini.promptStream(
-        parts: parts,
-        );
-
-      responseStream.listen(
-        (event) {
-          String generatedText = event!.content!.parts!
-          .map((part) => (part as flutter_gemini.TextPart).text)
-          .join(' ');
-          if (widget.messages.first.user.id == dot.id) {
-            setState(() {
-              widget.messages.first.text += ' $generatedText ';
-            });
-          } else {
-            setState(() {
-              widget.messages.insert(0, ChatMessage(
-                text: generatedText,
-                user: dot,
-                createdAt: DateTime.now(),
-              ));
-            });
-          }
-        },
-        onDone: () {
-          setState(() {
-            isBotTyping = false;
-          });
-          ChatService.addMessageToSession(session, widget.messages.first);
-        },
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Message cannot be empty')),
-      );
+  Stream<String?> generateResponse(String prompt) async* {
+    final stream = model.generateContentStream([Content.text(prompt)]);
+    await for (final chunk in stream) {
+        yield chunk.text;
     }
   }
+
+  void _sendMessage(ChatMessage chatMessage) async {
+    if (widget.session == null)  { 
+          session = await ChatService.createSession();
+          setState(() {});
+      }
+    if (chatMessage.text.trim().isNotEmpty) {
+    setState(() {
+      widget.messages.insert(0, chatMessage);
+      isBotTyping = true;
+    });
+
+    if (widget.messages.length == 1 && (widget.session?.title == "New Chat" || widget.session?.title == "History Cleared")) {
+      widget.session?.title = chatMessage.text;
+      await widget.session?.save();
+      setState(() {});
+    }
+
+    ChatService.addMessageToSession(widget.session, chatMessage);
+
+    StringBuffer responseBuffer = StringBuffer();
+    ChatMessage? botMessage;
+
+    await for (final event in generateResponse(chatMessage.text)) {
+      if (event != null) {
+        responseBuffer.write(event);
+
+        if (botMessage == null) {
+          botMessage = ChatMessage(
+            text: responseBuffer.toString(),
+            user: dot,
+            createdAt: DateTime.now(),
+          );
+
+          setState(() {
+            widget.messages.insert(0, botMessage!);
+          });
+        } else {
+          setState(() {
+            botMessage!.text = responseBuffer.toString();
+          });
+        }
+      }
+    }
+
+    setState(() {
+      isBotTyping = false;
+    });
+
+    if (botMessage != null) {
+      ChatService.addMessageToSession(widget.session, botMessage);
+    }
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Message cannot be empty')),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +116,7 @@ class _ChatUiState extends State<ChatUi> {
                 child: SingleChildScrollView(
                   child:  Column(
                       children: [
-                        Image.asset('assets/dot.png', width: 30),
+                        Image.asset(themeProvider.themeMode == ThemeMode.dark ? 'assets/dot_dark.png' :'assets/dot.png', width: 30),
                         const Text(
                           "Welcome to Dot Chat!",
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -112,10 +133,10 @@ class _ChatUiState extends State<ChatUi> {
                       return GestureDetector(
                         onTap: () async{
                           ChatMessage chatMessage = ChatMessage(text: prompt, user: currentUser, createdAt: DateTime.now());
-                          if (session == null)  { 
-                            session = await ChatService.createSession();
-                            setState(() {});
-                          }
+                          // if (session == null)  { 
+                          //   session = await ChatService.createSession();
+                          //   setState(() {});
+                          // }
                           _sendMessage(chatMessage);
                         },
                         child: Container(
@@ -123,7 +144,7 @@ class _ChatUiState extends State<ChatUi> {
                           margin: EdgeInsets.only(bottom: 5),
                           width: 200,
                           decoration: BoxDecoration(
-                            color: themeProvider.themeMode == ThemeMode.dark ? Colors.black : Colors.white,
+                            color: Colors.transparent,
                             borderRadius: BorderRadius.circular(8.0),
                             border: Border.all(color: themeProvider.themeMode == ThemeMode.dark ? Colors.white : Colors.black),
                           ),
@@ -153,25 +174,31 @@ class _ChatUiState extends State<ChatUi> {
                 sendOnEnter: true,
                 inputDecoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    ),
+                  fillColor: themeProvider.themeMode == ThemeMode.dark ? Colors.black : Colors.white,
                   filled: true,
                   hintText: "Type a message...",
                 ),
               ),
               messageOptions: MessageOptions(
+                containerColor:themeProvider.themeMode == ThemeMode.dark ? Colors.grey.shade900 : Colors.grey.shade100,
+                currentUserContainerColor: themeProvider.themeMode == ThemeMode.dark ? Colors.grey.shade700 : Colors.grey.shade400,
                 showOtherUsersAvatar: false,
+                showOtherUsersName: false,
+                maxWidth: MediaQuery.of(context).size.width,
                 messagePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 messageTextBuilder: (ChatMessage message, ChatMessage? previousMessage, ChatMessage? nextMessage) {
                   return SelectableAdapter(
-                    selectedText: message.text,
-                    child: GptMarkdown(
-                      message.text,
-                      style: TextStyle(
-                          color: message.user.id == currentUser.id ? Colors.white : Colors.black,
-                        ),
-                    ),
-                  );
+                      selectedText: message.text,
+                      child: GptMarkdown(
+                        message.text,
+                        style: TextStyle(
+                            color: themeProvider.themeMode == ThemeMode.dark ?  Colors.white : Colors.black,
+                          ),
+                      ),
+                    );
                 },
               ),
             ),

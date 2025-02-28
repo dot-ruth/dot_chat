@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       key:_scaffoldKey,
       appBar: AppBar(
-        backgroundColor: themeProvider.themeMode == ThemeMode.dark ? Colors.black : Colors.white,
+        backgroundColor: themeProvider.themeMode == ThemeMode.dark ? Colors.transparent: Colors.white,
         scrolledUnderElevation: 0.0,
         automaticallyImplyLeading: false,
         title: Row(
@@ -55,13 +55,14 @@ class _HomePageState extends State<HomePage> {
               children: [
                 IconButton(
                   onPressed: () { themeProvider.toggleTheme();},
-                  icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.sunny : Icons.dark_mode_outlined),
+                  icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.wb_sunny_outlined : Icons.dark_mode_outlined),
         ),
                 IconButton(
                 icon: Icon(CupertinoIcons.delete),
                 onPressed: () async {
                    if (session != null) {
                        session!.messages.clear(); 
+                       session!.title="History Cleared";
                        await session!.save(); 
                     }
                    setState(() {messages.clear(); });
@@ -73,7 +74,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       drawer: ChatHistoryDrawer(onChatSelected: _loadChat),
-      body: ChatUi(messages: messages),
+      body: ChatUi(messages: messages, session: session),
     );
   }
 }

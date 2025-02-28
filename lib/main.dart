@@ -4,7 +4,6 @@ import 'package:dot_chat/providers/theme_provider.dart';
 import 'package:dot_chat/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_gemini/flutter_gemini.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -19,10 +18,6 @@ void main() async {
 
   await Hive.openBox<ChatSessionModel>('chatBox');
 
-  Gemini.init(
-    apiKey: dotenv.env['GEMINI_API_KEY'] ?? ''
-  );
-
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
@@ -33,13 +28,13 @@ void main() async {
 
 final lightTheme = ThemeData(
     brightness: Brightness.light,
-    primaryColor: Colors.teal,
+    primaryColor: Colors.black,
     scaffoldBackgroundColor: Colors.white
   );
 
   final darkTheme = ThemeData(
   brightness: Brightness.dark,
-  primaryColor: Colors.grey,
+  primaryColor: Colors.white,
 );
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
