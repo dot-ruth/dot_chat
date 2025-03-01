@@ -9,23 +9,17 @@ import 'package:gpt_markdown/custom_widgets/selectable_adapter.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:provider/provider.dart';
 
+// ignore: must_be_immutable
 class ChatUi extends StatefulWidget {
   final List<ChatMessage> messages;
-  final ChatSessionModel? session;
-  const  ChatUi({super.key, required this.messages, this.session});
+  ChatSessionModel? session;
+  ChatUi({super.key, required this.messages, this.session});
 
   @override
   State<ChatUi> createState() => _ChatUiState();
 }
 
 class _ChatUiState extends State<ChatUi> {
-  ChatSessionModel? session;
-   @override
-  void initState() {
-    super.initState();
-    session = widget.session; 
-  }
-
   bool isBotTyping = false;
   final model = GenerativeModel(model: 'gemini-2.0-flash',apiKey: dotenv.env['GEMINI_API_KEY'] ?? '');
   ChatUser currentUser = ChatUser(id: "0", firstName: "You");
@@ -46,10 +40,6 @@ class _ChatUiState extends State<ChatUi> {
   }
 
   void _sendMessage(ChatMessage chatMessage) async {
-    if (widget.session == null)  { 
-          session = await ChatService.createSession();
-          setState(() {});
-      }
     if (chatMessage.text.trim().isNotEmpty) {
     setState(() {
       widget.messages.insert(0, chatMessage);
@@ -133,10 +123,10 @@ class _ChatUiState extends State<ChatUi> {
                       return GestureDetector(
                         onTap: () async{
                           ChatMessage chatMessage = ChatMessage(text: prompt, user: currentUser, createdAt: DateTime.now());
-                          // if (session == null)  { 
-                          //   session = await ChatService.createSession();
-                          //   setState(() {});
-                          // }
+                          if (widget.session == null)  { 
+                              widget.session = await ChatService.createSession();
+                              setState(() {});
+                          }
                           _sendMessage(chatMessage);
                         },
                         child: Container(
@@ -187,7 +177,7 @@ class _ChatUiState extends State<ChatUi> {
                 currentUserContainerColor: themeProvider.themeMode == ThemeMode.dark ? Colors.grey.shade700 : Colors.grey.shade400,
                 showOtherUsersAvatar: false,
                 showOtherUsersName: false,
-                maxWidth: MediaQuery.of(context).size.width,
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
                 messagePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 messageTextBuilder: (ChatMessage message, ChatMessage? previousMessage, ChatMessage? nextMessage) {
                   return SelectableAdapter(
