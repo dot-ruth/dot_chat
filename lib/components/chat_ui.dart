@@ -1,4 +1,5 @@
 import 'package:dash_chat_2/dash_chat_2.dart';
+import 'package:dot_chat/ai/system_prompt.dart';
 import 'package:dot_chat/models/chat_session_model.dart';
 import 'package:dot_chat/providers/theme_provider.dart';
 import 'package:dot_chat/services/chat_service.dart';
@@ -21,7 +22,11 @@ class ChatUi extends StatefulWidget {
 
 class _ChatUiState extends State<ChatUi> {
   bool isBotTyping = false;
-  final model = GenerativeModel(model: 'gemini-2.0-flash',apiKey: dotenv.env['GEMINI_API_KEY'] ?? '');
+  final model = GenerativeModel(
+      model: 'gemini-2.0-flash',
+      apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
+      systemInstruction: Content('',[TextPart(systemPrompt)])
+    );
   ChatUser currentUser = ChatUser(id: "0", firstName: "You");
   ChatUser dot = ChatUser(id: "1", firstName: "Dot");
   final List<String> samplePrompts = [
