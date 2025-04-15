@@ -1,14 +1,13 @@
-import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:dot_chat/models/chat_session_model.dart';
+import 'package:dot_chat/screens/chat.dart';
 import 'package:dot_chat/services/chat_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class ChatHistoryDrawer extends StatelessWidget {
-  final void Function(List<ChatMessage>, ChatSessionModel) onChatSelected;
 
-  const ChatHistoryDrawer({super.key, required this.onChatSelected});
+  const ChatHistoryDrawer({super.key});
 
   Future<Box> openChatBox() async {
     return await Hive.openBox('chatBox');
@@ -32,8 +31,10 @@ Widget build(BuildContext context) {
                 GestureDetector(
             onTap: () async {
               ChatSessionModel newSession = await ChatService.createSession();
-              onChatSelected([], newSession); 
-              (context as Element).markNeedsBuild();
+               Navigator.of(context as Element).push(
+                               MaterialPageRoute(builder: (context) => Chat(messages: [],session: newSession)),
+                             );
+              // (context as Element).markNeedsBuild();
             },
             child: Row(
               children: [
@@ -72,13 +73,14 @@ Widget build(BuildContext context) {
                           title: Text(sessions[index].title),
                           onTap: () {
                             var messages = ChatService.getMessagesFromSession(sessions[index]);
-                            onChatSelected(messages,sessions[index]); // Load session
-                            Navigator.pop(context);
+                            Navigator.of(context).push(
+                               MaterialPageRoute(builder: (context) => Chat(messages: messages,session: sessions[index])),
+                             );
                           },
                         );
                       },
                     );
-            },
+                },
           ),
         ),
       ],

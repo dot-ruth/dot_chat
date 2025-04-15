@@ -113,12 +113,12 @@ class _ChatUiState extends State<ChatUi> {
                       children: [
                         Image.asset(themeProvider.themeMode == ThemeMode.dark ? 'assets/dot_dark.png' :'assets/dot.png', width: 30),
                         const Text(
-                          "Welcome to Dot Chat!",
+                          "DOT",
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 5),
                         const Text(
-                          "Chat with Dot, your AI assistant.",
+                          "Always Within Reach",
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                           textAlign: TextAlign.center,
                         ),
